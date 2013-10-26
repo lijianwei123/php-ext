@@ -1,0 +1,49 @@
+zend api学习笔记：
+@see http://www.walu.cc/phpbook
+@see http://www.kuqin.com/php5_doc/x184467.html
+
+
+zval start:
+php在内核中是通过zval结构体存储变量的 
+定义在Zend/zend.h文件中
+struct _zval_struct {
+	zvalue_value value; /*变量的值*/
+	zend_uint refcount__gc;
+	zend_uchar type; /*变量当前的数据类型*/
+	zend_uchar is_ref_gc;
+};
+typedef struct _zval_struct zval;
+
+//在Zend/zend_types.h里定义的
+typedef unsigned int zend_uint;
+typedef unsigned char zend_uchar;
+
+
+zvalue_value 类型是个union 定义在Zend/zend.h
+typedef union _zvalue_value {
+	long lval; /* long value */
+	double dval;/*double value*/
+	struct{
+		char *val;
+		int len;
+	} str;
+	HashTable *ht; /*hash table value*/
+	zend_object_value obj;
+} zvalue_value;
+
+PHP内部定义的数据类型:
+IS_NULL
+IS_LONG
+IS_DOUBLE
+IS_BOOL
+IS_ARRAY
+IS_OBJECT
+IS_STRING
+IS_RESOURCE
+IS_CONSTANT
+IS_CONSTANT_ARRAY
+
+
+zval end:
+
+
