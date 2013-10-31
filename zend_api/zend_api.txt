@@ -83,4 +83,77 @@ zval end:
 创建PHP变量
 MAKE_STD_ZVAL  ALLOC_INIT_ZVAL
 
+ZVAL_NULL(pvz)   
+ZVAL_BOOL(pzv,b)
+ZVAL_TRUE(pzv)
+ZVAL_FALSE(pzv)
+ZVAL_LONG(pzv, 1)
+ZVAL_DOUBLE(pzv, d)
+ZVAL_STRINGL(pzv, str, len, dup)
+ZVAL_STRING(pzv, str, dup)
+ZVAL_RESOURCE(pzv, res)
+
+
+变量的存储方式
+  Zend/zend_globals.h
+  struct _zend_executor_globals {
+	HashTable  symbol_table;  #可以通过EG宏访问 代表PHP的全局变量  如$GLOBALS
+	HashTable  *active_symbol_table; #可以通过EG(active_symbol_table) 它代表的是处于当前作用域的变量符号表
+  };
+
+
+此段代码相当于
+zval *fooval;
+MAKE_STD_ZVAL(fooval);
+ZVAL_STRING(fooval, "bar", 1);
+ZEND_SET_SYMBOL(EG(active_symbol_table), "foo", fooval);
+
+$foo = 'bar';
+
+变量的检索
+
+zend_hash_find
+
+zval ** fooval;
+if(zend_hash_find(EG(active_symbol_table), "foo", sizeof("foo"), (void **)&fooval) == SUCCESS) {
+	php_printf("成功发现$foo!");
+} else {
+	php_printf("没有发现$foo!");
+}
+
+类型转换
+ZEND_API void convert_to_long(zval *op);
+ZEND_API void convert_to_double(zval *op);
+ZEND_API void convert_to_null(zval *op);
+ZEND_API void convert_to_boolean(zval *op);
+ZEND_API void convert_to_array(zval *op);
+ZEND_API void convert_to_object(zval *op);
+ZEND_API void _convert_to_string(zval *op ZEND_FILE_LINE_DC);
+
+#define convert_to_string(op) if((op)->type != IS_STRING) { _convert_to_string((op) ZEND_FILE_LINE_CC);}
+
+内存管理
+void call_function(const char *fname, int fname_len TSRMLS_DC)
+{
+	zend_function *fe;
+	char * lcase_fname;
+
+	lcase_fname = estrndup(fname, fname_len);
+	zend_str_tolower(lcase_fname, fname_len);
+
+	if(zend_hash_find(EG(function_table), lcase_fname, fname_len + 1, (void **)&fe) == SUCCESS)
+	{
+		zend_execute(fe->op_array TSRMLS_CC);
+	} else {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "call to undefined function: %s()", fname);
+	}
+	efree(lcase_fname);
+}
+
+
+
+
+
+
+
 
