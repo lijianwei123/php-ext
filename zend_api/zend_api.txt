@@ -150,6 +150,82 @@ void call_function(const char *fname, int fname_len TSRMLS_DC)
 	efree(lcase_fname);
 }
 
+可变参数
+var_dump 在内核中如何实现
+
+ZEND_FUNCTION(var_dump)
+{
+	int i, argc = ZEND_NUM_AEGS();
+	zval ***args;
+
+	args = (zval ***)safe_emalloc(argc, sizeof(zval **), 0);
+	if(ZEND_NUM_ARGS() ==0 || zend_get_parameters_array_ex(argc, args) == FAILURE) {
+		efree(args);
+		WRONG_PARAM_COUNT;
+	}
+	for(i=0; i<argc; i++){
+		php_var_dump(args[i], 1 TSRMLS_CC);
+	}
+	efree(args);
+}
+
+7.2 函数的参数
+count函数重写
+
+ZEND_FUNCTION(sample_count_array)
+{
+	zval *arr;
+	if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &arr) == FAILURE) {
+		RETURN_NULL();
+	}
+	RETURN_LONG(zend_hash_num_elements(Z_ARRVAL_P(arr));
+}
+
+HASHTABLE API:
+hashtable 初始化
+int zend_hash_init(
+	HashTable *ht;
+	unit nSize,
+	hash_func_t pHashFunction,
+	dtor_func_t pDestructor,
+	zend_bool persistent
+);
+
+hashtable添加
+int zend_hash_add(
+	HashTable *ht,
+	char *arKey,
+	uint nKeyLen,
+	void **pData,
+	uint nDataSize,
+	void *pDest
+);
+
+int zend_hash_update(
+	HashTable *ht,
+	char *arKey,
+	uint nKeyLen,
+	void *pData,
+	uint nDataSize,
+	void **pDest
+);
+
+int zend_hash_index_update(
+	HashTable *ht,
+	ulong h,
+	void *PData,
+	uint nDataSize,
+	void **pDest
+);
+
+int zend_hash_next_index_insert(
+	HashTable *ht,
+	void *pData,
+	uint nDataSize,
+	void **pDest
+);
+
+
 
 
 
