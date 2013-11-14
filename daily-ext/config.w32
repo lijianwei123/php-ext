@@ -1,0 +1,13 @@
+// $Id$
+// vim:ft=javascript
+
+// If your extension references something external, use ARG_WITH
+// ARG_WITH("daily-ext", "for daily-ext support", "no");
+
+// Otherwise, use ARG_ENABLE
+// ARG_ENABLE("daily-ext", "enable daily-ext support", "no");
+
+if (PHP_DAILY-EXT != "no") {
+	EXTENSION("daily-ext", "daily-ext.c");
+}
+
