@@ -112,7 +112,7 @@ ZEND_GET_MODULE(daily-ext)
 /* Remove comments and fill if you need to have entries in php.ini*/
 
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("daily-ext.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_daily-ext_globals, daily-ext_globals)
+    STD_PHP_INI_ENTRY("daily-ext.db_host",      "localhost", PHP_INI_ALL, OnUpdateString, global_value, zend_daily-ext_globals, daily-ext_globals)
     STD_PHP_INI_ENTRY("daily-ext.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_daily-ext_globals, daily-ext_globals)
 PHP_INI_END()
 
@@ -143,6 +143,8 @@ PHP_MINIT_FUNCTION(daily-ext)
 	Basedb_ce = zend_register_internal_class_ex(&Basedb, NULL, NULL TSRMLS_CC); //注册类  第二个参数  父类  父类名称
 	//声明类属性
 	zend_declare_property_null(Basedb_ce, ZEND_STRL("_conn"), ZEND_ACC_STATIC|ZEND_ACC_PRIVATE TSRMLS_CC);
+	//声明db_host
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), ZEND_ACC_PRIVATE TSRMLS_CC);
 
 	return SUCCESS;
 }
@@ -221,7 +223,22 @@ PHP_FUNCTION(confirm_daily-ext_compiled)
 PHP_METHOD(Basedb, __construct)
 {
 	zval *db_host, *db_user, *db_pwd, *db_name;
-	db_host = zend_read_property()
+
+	zend_class_entry *ce;
+	ce = Z_OBJCE(getThis());
+
+
+/*	zend_read_property 第五个参数的含义
+
+    0: 如果属性不存在，则抛出一个notice错误。
+    1: 如果属性不存在，不报错。*/
+
+	db_host = zend_read_property(ce, getThis(), ZEND_STRL("db_host"), 1 TSRMLS_CC);
+	db_user = zend_read_property(ce, getThis(), ZEND_STRL("db_user"), 1 TSRMLS_CC);
+	db_pwd = zend_read_property(ce, getThis(), ZEND_STRL("db_pwd"), 1 TSRMLS_CC);
+	db_name = zend_read_property(ce, getThis(), ZEND_STRL("db_name"), 1 TSRMLS_CC);
+
+
 }
 /* }}} */
 
