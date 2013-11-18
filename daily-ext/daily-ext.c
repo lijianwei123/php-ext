@@ -237,10 +237,13 @@ PHP_METHOD(Basedb, __construct)
 		return;
 	}
 
+	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_host"), db_host TSRMLS_CC);
+	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_user"), db_user TSRMLS_CC);
+	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_pwd"), db_pwd TSRMLS_CC);
+	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_name"), db_name TSRMLS_CC);
 
-
-
-
+	//RETURN_ZVAL 第一个参数  待复制的对象    第二个参数  是否复制    第三个参数 是否释放复制的对象
+	RETURN_ZVAL(getThis(), 1, 0);
 }
 /* }}} */
 
