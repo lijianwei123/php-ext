@@ -112,21 +112,23 @@ ZEND_GET_MODULE(daily-ext)
 /* Remove comments and fill if you need to have entries in php.ini*/
 
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("daily-ext.db_host",      "localhost", PHP_INI_ALL, OnUpdateString, global_value, zend_daily-ext_globals, daily-ext_globals)
-    STD_PHP_INI_ENTRY("daily-ext.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_daily-ext_globals, daily-ext_globals)
+    STD_PHP_INI_ENTRY("daily-ext.default_db_host",      "localhost", PHP_INI_ALL, OnUpdateString, default_db_host, zend_daily-ext_globals, daily-ext_globals)
+    STD_PHP_INI_ENTRY("daily-ext.default_db_user",      "root", PHP_INI_ALL, OnUpdateString, default_db_user, zend_daily-ext_globals, daily-ext_globals)
+    STD_PHP_INI_ENTRY("daily-ext.default_db_pwd",      "root", PHP_INI_ALL, OnUpdateString, default_db_pwd, zend_daily-ext_globals, daily-ext_globals)
+    STD_PHP_INI_ENTRY("daily-ext.default_db_name",      "test", PHP_INI_ALL, OnUpdateString, default_db_name, zend_daily-ext_globals, daily-ext_globals)
 PHP_INI_END()
 
 /* }}} */
 
 /* {{{ php_daily-ext_init_globals
  */
-/* Uncomment this function if you have INI entries*/
+/* Uncomment this function if you have INI entries
 static void php_daily-ext_init_globals(zend_daily-ext_globals *daily-ext_globals)
 {
 	daily-ext_globals->global_value = 0;
 	daily-ext_globals->global_string = NULL;
 }
-
+*/
 /* }}} */
 
 zend_class_entry *Basedb_ce;
@@ -143,8 +145,11 @@ PHP_MINIT_FUNCTION(daily-ext)
 	Basedb_ce = zend_register_internal_class_ex(&Basedb, NULL, NULL TSRMLS_CC); //注册类  第二个参数  父类  父类名称
 	//声明类属性
 	zend_declare_property_null(Basedb_ce, ZEND_STRL("_conn"), ZEND_ACC_STATIC|ZEND_ACC_PRIVATE TSRMLS_CC);
-	//声明db_host
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), ZEND_ACC_PRIVATE TSRMLS_CC);
+	//声明db_host db_user db_pwd db_name
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), DAILY-EXT_G('default_db_host'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_user"), DAILY-EXT_G('default_db_user'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_pwd"), DAILY-EXT_G('default_db_pwd'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_name"), DAILY-EXT_G('default_db_name'), ZEND_ACC_PRIVATE TSRMLS_CC);
 
 	return SUCCESS;
 }
@@ -222,6 +227,28 @@ PHP_FUNCTION(confirm_daily-ext_compiled)
  */
 PHP_METHOD(Basedb, __construct)
 {
+	//获取值
+	char *db_host = '', *db_user = '', *db_pwd = '', *db_name = '';
+	int host_len, user_len, pwd_len, name_len;
+
+	//zend_parse_parameters 这个参数之前的参数被认为是必须的，之后的便认为是非必须的了,如果没有传递，则不会去修改载体
+	if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ssss", &db_host, &host_len, &db_user, &user_len, &db_pwd, &pwd_len, &db_name, &name_len) == FAILURE) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "param error!");
+		return;
+	}
+
+
+
+
+
+}
+/* }}} */
+
+
+/* {{{ PHP_MINFO_FUNCTION
+ */
+PHP_METHOD(Basedb, connect)
+{
 	zval *db_host, *db_user, *db_pwd, *db_name;
 
 	zend_class_entry *ce;
@@ -237,16 +264,6 @@ PHP_METHOD(Basedb, __construct)
 	db_user = zend_read_property(ce, getThis(), ZEND_STRL("db_user"), 1 TSRMLS_CC);
 	db_pwd = zend_read_property(ce, getThis(), ZEND_STRL("db_pwd"), 1 TSRMLS_CC);
 	db_name = zend_read_property(ce, getThis(), ZEND_STRL("db_name"), 1 TSRMLS_CC);
-
-
-}
-/* }}} */
-
-
-/* {{{ PHP_MINFO_FUNCTION
- */
-PHP_METHOD(Basedb, connect)
-{
 
 }
 /* }}} */
