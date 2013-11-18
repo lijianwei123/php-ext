@@ -252,21 +252,46 @@ PHP_METHOD(Basedb, __construct)
  */
 PHP_METHOD(Basedb, connect)
 {
-	zval *db_host, *db_user, *db_pwd, *db_name;
-
 	zend_class_entry *ce;
 	ce = Z_OBJCE(getThis());
 
+
+	zval *conn;
+	conn = zend_read_static_property(ce, ZEDN_STRL("_conn"), 1 TSRMLS_CC);
+	if(IS_OBJECT == Z_TYPE_P(conn))
+		return;
+
+
+	zval func = {{0}, 0};
+	zval *retval_ptr = NULL;
+	zval *params[3] = {0};
+
+	zval *db_host, *db_user, *db_pwd, *db_name;
 
 /*	zend_read_property 第五个参数的含义
 
     0: 如果属性不存在，则抛出一个notice错误。
     1: 如果属性不存在，不报错。*/
-
 	db_host = zend_read_property(ce, getThis(), ZEND_STRL("db_host"), 1 TSRMLS_CC);
 	db_user = zend_read_property(ce, getThis(), ZEND_STRL("db_user"), 1 TSRMLS_CC);
 	db_pwd = zend_read_property(ce, getThis(), ZEND_STRL("db_pwd"), 1 TSRMLS_CC);
 	db_name = zend_read_property(ce, getThis(), ZEND_STRL("db_name"), 1 TSRMLS_CC);
+
+	params[0] = db_host;
+	params[1] = db_user;
+	params[2] = db_pwd;
+
+	//调用mysql_connect
+	ZVAL_STRING(&function, "mysql_connect", 0);
+	if(call_user_function(EG(function_table), NULL, &func, return_value, 3, $params TSRMLS_CC) == FAILURE) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "mysql connect error");
+		return;
+	}
+
+	//更新self::_conn
+	zend_udpate_static_property(ce, ZEND_STRL("_conn"), return_value TSRMLS_CC);
+
+	//选择数据库
 
 }
 /* }}} */
