@@ -220,7 +220,8 @@ PHP_FUNCTION(confirm_daily-ext_compiled)
  */
 PHP_METHOD(Basedb, __construct)
 {
-
+	zval *db_host, *db_user, *db_pwd, *db_name;
+	db_host = zend_read_property()
 }
 /* }}} */
 
