@@ -36,21 +36,15 @@ extern zend_module_entry daily-ext_module_entry;
 #include "TSRM.h"
 #endif
 
+
+#define DAILY_STARTUP(module)	 		  	ZEND_MODULE_STARTUP_N(module)(INIT_FUNC_ARGS_PASSTHRU)
+#define DAILY_STARTUP_FUNCTION(module)   	ZEND_MINIT_FUNCTION(module)
+
 PHP_MINIT_FUNCTION(daily-ext);
 PHP_MSHUTDOWN_FUNCTION(daily-ext);
 PHP_RINIT_FUNCTION(daily-ext);
 PHP_RSHUTDOWN_FUNCTION(daily-ext);
 PHP_MINFO_FUNCTION(daily-ext);
-
-PHP_FUNCTION(confirm_daily-ext_compiled);	/* For testing, remove later. */
-
-PHP_METHOD(Basedb, __construct);
-PHP_METHOD(Basedb, connect);
-PHP_METHOD(Basedb, select);
-PHP_METHOD(Basedb, insert);
-PHP_METHOD(Basedb, update);
-PHP_METHOD(Basedb, del);
-
 
 
 /* 
@@ -78,6 +72,8 @@ ZEND_END_MODULE_GLOBALS(daily-ext)
 #else
 #define DAILY-EXT_G(v) (daily-ext_globals.v)
 #endif
+
+extern ZEND_DECLARE_MODULE_GLOBALS(daily-ext);
 
 #endif	/* PHP_DAILY-EXT_H */
 
