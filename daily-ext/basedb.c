@@ -30,6 +30,8 @@
 #include "ext/standard/basic_functions.h"
 
 #include "php_daily-ext.h"
+#include "basedb.h"
+
 
 zend_class_entry *Basedb_ce;
 
