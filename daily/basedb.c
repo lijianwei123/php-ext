@@ -68,26 +68,13 @@ ZEND_END_ARG_INFO()
 
 
 
-/* {{{ basedb_methods[]
-*/
-const zend_function_entry basedb_methods[] = {
-	PHP_ME(Basedb, __construct, basedb_arg_construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
-	PHP_ME(Basedb, select, basedb_arg_select, ZEND_ACC_PUBLIC)
-	PHP_ME(Basedb, insert, basedb_arg_insert, ZEND_ACC_PUBLIC)
-	PHP_ME(Basedb, update, basedb_arg_update, ZEND_ACC_PUBLIC)
-	PHP_ME(Basedb, del, basedb_arg_del, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}	/* Must be the last line in daily_functions[] */
-};
-/* }}} */
-
-
 
 /* {{{ Basedb::__construct($db_host = '', $db_user = '', $db_pwd = '', $db_name = '')
  */
 PHP_METHOD(Basedb, __construct)
 {
 	//获取值
-	char *db_host = '', *db_user = '', *db_pwd = '', *db_name = '';
+	char *db_host = "", *db_user = "", *db_pwd = "", *db_name = "";
 	int host_len, user_len, pwd_len, name_len;
 
 	//zend_parse_parameters 这个参数之前的参数被认为是必须的，之后的便认为是非必须的了,如果没有传递，则不会去修改载体
@@ -153,6 +140,18 @@ PHP_METHOD(Basedb, connect)
 	//选择数据库
 
 }
+
+/* {{{ basedb_methods[]
+*/
+const zend_function_entry basedb_methods[] = {
+	PHP_ME(Basedb, __construct, basedb_arg_construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+	PHP_ME(Basedb, select, basedb_arg_select, ZEND_ACC_PUBLIC)
+	PHP_ME(Basedb, insert, basedb_arg_insert, ZEND_ACC_PUBLIC)
+	PHP_ME(Basedb, update, basedb_arg_update, ZEND_ACC_PUBLIC)
+	PHP_ME(Basedb, del, basedb_arg_del, ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}	/* Must be the last line in daily_functions[] */
+};
+/* }}} */
 
 DAILY_STARTUP_FUNCTION(basedb)
 {
