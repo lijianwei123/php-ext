@@ -29,7 +29,7 @@
 #include "ext/standard/php_var.h"
 #include "ext/standard/basic_functions.h"
 
-#include "php_daily-ext.h"
+#include "php_daily.h"
 #include "basedb.h"
 
 
@@ -76,7 +76,7 @@ const zend_function_entry basedb_methods[] = {
 	PHP_ME(Basedb, insert, basedb_arg_insert, ZEND_ACC_PUBLIC)
 	PHP_ME(Basedb, update, basedb_arg_update, ZEND_ACC_PUBLIC)
 	PHP_ME(Basedb, del, basedb_arg_del, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}	/* Must be the last line in daily-ext_functions[] */
+	{NULL, NULL, NULL}	/* Must be the last line in daily_functions[] */
 };
 /* }}} */
 
@@ -162,10 +162,10 @@ DAILY_STARTUP_FUNCTION(basedb)
 	//声明类属性
 	zend_declare_property_null(Basedb_ce, ZEND_STRL("_conn"), ZEND_ACC_STATIC|ZEND_ACC_PRIVATE TSRMLS_CC);
 	//声明db_host db_user db_pwd db_name
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), DAILY-EXT_G('default_db_host'), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_user"), DAILY-EXT_G('default_db_user'), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_pwd"), DAILY-EXT_G('default_db_pwd'), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_name"), DAILY-EXT_G('default_db_name'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), DAILY_G('default_db_host'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_user"), DAILY_G('default_db_user'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_pwd"), DAILY_G('default_db_pwd'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_name"), DAILY_G('default_db_name'), ZEND_ACC_PRIVATE TSRMLS_CC);
 
 	return SUCCESS;
 }

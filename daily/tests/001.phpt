@@ -1,10 +1,10 @@
 --TEST--
-Check for daily-ext presence
+Check for daily presence
 --SKIPIF--
-<?php if (!extension_loaded("daily-ext")) print "skip"; ?>
+<?php if (!extension_loaded("daily")) print "skip"; ?>
 --FILE--
 <?php 
-echo "daily-ext extension is available";
+echo "daily extension is available";
 /*
 	you can add regression tests for your extension here
 
@@ -18,4 +18,4 @@ echo "daily-ext extension is available";
 */
 ?>
 --EXPECT--
-daily-ext extension is available
+daily extension is available

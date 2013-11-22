@@ -1,10 +1,10 @@
 <?php
 $br = (php_sapi_name() == "cli")? "":"<br>";
 
-if(!extension_loaded('daily-ext')) {
-	dl('daily-ext.' . PHP_SHLIB_SUFFIX);
+if(!extension_loaded('daily')) {
+	dl('daily.' . PHP_SHLIB_SUFFIX);
 }
-$module = 'daily-ext';
+$module = 'daily';
 $functions = get_extension_funcs($module);
 echo "Functions available in the test extension:$br\n";
 foreach($functions as $func) {
