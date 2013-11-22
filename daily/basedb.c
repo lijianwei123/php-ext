@@ -105,7 +105,7 @@ PHP_METHOD(Basedb, connect)
 
 
 	zval *conn;
-	conn = zend_read_static_property(ce, ZEDN_STRL("_conn"), 1 TSRMLS_CC);
+	conn = zend_read_static_property(Basedb_ce, ZEND_STRL("_conn"), 1 TSRMLS_CC);
 	if(IS_OBJECT == Z_TYPE_P(conn))
 		return;
 
@@ -170,10 +170,10 @@ DAILY_STARTUP_FUNCTION(basedb)
 	//声明类属性
 	zend_declare_property_null(Basedb_ce, ZEND_STRL("_conn"), ZEND_ACC_STATIC|ZEND_ACC_PRIVATE TSRMLS_CC);
 	//声明db_host db_user db_pwd db_name
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), DAILY_G("default_db_host"), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_user"), DAILY_G("default_db_user"), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_pwd"), DAILY_G("default_db_pwd"), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_name"), DAILY_G("default_db_name"), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), DAILY_G(default_db_host), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_user"), DAILY_G(default_db_user), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_pwd"), DAILY_G(default_db_pwd), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_name"), DAILY_G(default_db_name), ZEND_ACC_PRIVATE TSRMLS_CC);
 
 	return SUCCESS;
 }
