@@ -24,6 +24,8 @@
 
 #include "php.h"
 #include "php_ini.h"
+#include "ext/standard/info.h"
+
 #include "main/SAPI.h"
 #include "Zend/zend_interfaces.h"
 #include "ext/standard/php_var.h"
@@ -83,10 +85,10 @@ PHP_METHOD(Basedb, __construct)
 		return;
 	}
 
-	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_host"), db_host TSRMLS_CC);
-	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_user"), db_user TSRMLS_CC);
-	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_pwd"), db_pwd TSRMLS_CC);
-	zend_update_property_string(Z_OBJCE(getThis()), getThis(), ZEND_STRL("_db_name"), db_name TSRMLS_CC);
+	zend_update_property_string(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("_db_host"), db_host TSRMLS_CC);
+	zend_update_property_string(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("_db_user"), db_user TSRMLS_CC);
+	zend_update_property_string(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("_db_pwd"), db_pwd TSRMLS_CC);
+	zend_update_property_string(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("_db_name"), db_name TSRMLS_CC);
 
 	//RETURN_ZVAL 第一个参数  待复制的对象    第二个参数  是否复制    第三个参数 是否释放复制的对象
 	RETURN_ZVAL(getThis(), 1, 0);
@@ -99,7 +101,7 @@ PHP_METHOD(Basedb, __construct)
 PHP_METHOD(Basedb, connect)
 {
 	zend_class_entry *ce;
-	ce = Z_OBJCE(getThis());
+	ce = Z_OBJCE_P(getThis());
 
 
 	zval *conn;
@@ -118,18 +120,18 @@ PHP_METHOD(Basedb, connect)
 
     0: 如果属性不存在，则抛出一个notice错误。
     1: 如果属性不存在，不报错。*/
-	db_host = zend_read_property(ce, getThis(), ZEND_STRL("db_host"), 1 TSRMLS_CC);
-	db_user = zend_read_property(ce, getThis(), ZEND_STRL("db_user"), 1 TSRMLS_CC);
-	db_pwd = zend_read_property(ce, getThis(), ZEND_STRL("db_pwd"), 1 TSRMLS_CC);
-	db_name = zend_read_property(ce, getThis(), ZEND_STRL("db_name"), 1 TSRMLS_CC);
+	db_host = zend_read_property(ce, getThis(), ZEND_STRL("_db_host"), 1 TSRMLS_CC);
+	db_user = zend_read_property(ce, getThis(), ZEND_STRL("_db_user"), 1 TSRMLS_CC);
+	db_pwd = zend_read_property(ce, getThis(), ZEND_STRL("_db_pwd"), 1 TSRMLS_CC);
+	db_name = zend_read_property(ce, getThis(), ZEND_STRL("_db_name"), 1 TSRMLS_CC);
 
 	params[0] = db_host;
 	params[1] = db_user;
 	params[2] = db_pwd;
 
 	//调用mysql_connect
-	ZVAL_STRING(&function, "mysql_connect", 0);
-	if(call_user_function(EG(function_table), NULL, &func, return_value, 3, $params TSRMLS_CC) == FAILURE) {
+	ZVAL_STRING(&func, "mysql_connect", 0);
+	if(call_user_function(EG(function_table), NULL, &func, return_value, 3, params TSRMLS_CC) == FAILURE) {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "mysql connect error");
 		return;
 	}
@@ -140,6 +142,11 @@ PHP_METHOD(Basedb, connect)
 	//选择数据库
 
 }
+
+PHP_METHOD(Basedb, select);
+PHP_METHOD(Basedb, insert);
+PHP_METHOD(Basedb, update);
+PHP_METHOD(Basedb, del);
 
 /* {{{ basedb_methods[]
 */
@@ -157,14 +164,16 @@ DAILY_STARTUP_FUNCTION(basedb)
 {
 	zend_class_entry Basedb;
 	INIT_CLASS_ENTRY(Basedb, "Basedb", basedb_methods);
-	Basedb_ce = zend_register_internal_class_ex(&Basedb, NULL, NULL TSRMLS_CC); //注册类  第二个参数  父类  父类名称
+
+	//注册类  第二个参数  父类  父类名称
+	Basedb_ce = zend_register_internal_class_ex(&Basedb, NULL, NULL TSRMLS_CC);
 	//声明类属性
 	zend_declare_property_null(Basedb_ce, ZEND_STRL("_conn"), ZEND_ACC_STATIC|ZEND_ACC_PRIVATE TSRMLS_CC);
 	//声明db_host db_user db_pwd db_name
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), DAILY_G('default_db_host'), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_user"), DAILY_G('default_db_user'), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_pwd"), DAILY_G('default_db_pwd'), ZEND_ACC_PRIVATE TSRMLS_CC);
-	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_name"), DAILY_G('default_db_name'), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_host"), DAILY_G("default_db_host"), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_user"), DAILY_G("default_db_user"), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_pwd"), DAILY_G("default_db_pwd"), ZEND_ACC_PRIVATE TSRMLS_CC);
+	zend_declare_property_string(Basedb_ce, ZEND_STRL("_db_name"), DAILY_G("default_db_name"), ZEND_ACC_PRIVATE TSRMLS_CC);
 
 	return SUCCESS;
 }
