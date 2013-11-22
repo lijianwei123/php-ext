@@ -38,33 +38,37 @@
 zend_class_entry *Basedb_ce;
 
 //basedb args
-ZEND_BEGIN_ARG_INFO(basedb_arg_construct, 4)
+ZEND_BEGIN_ARG_INFO(basedb_arg_construct, 0)
 	ZEND_ARG_INFO(0, db_host) //0 表示按值传递  1表示引用传递
 	ZEND_ARG_INFO(0, db_user)
 	ZEND_ARG_INFO(0, db_pwd)
 	ZEND_ARG_INFO(0, db_name)
 ZEND_END_ARG_INFO()
 
+//connect
+ZEND_BEGIN_ARG_INFO(basedb_arg_connect, 0)
+ZEND_END_ARG_INFO()
+
 //select
-ZEND_BEGIN_ARG_INFO(basedb_arg_select, 1)
+ZEND_BEGIN_ARG_INFO(basedb_arg_select, 0)
 	ZEND_ARG_INFO(0, sql)
 ZEND_END_ARG_INFO()
 
 //insert
-ZEND_BEGIN_ARG_INFO(basedb_arg_insert, 2)
+ZEND_BEGIN_ARG_INFO(basedb_arg_insert, 0)
 	ZEND_ARG_INFO(0, tablename)
 	ZEND_ARG_ARRAY_INFO(0, data, 1) //ZEND_ARG_ARRAY_INFO(by_ref, name, allow_null)
 ZEND_END_ARG_INFO()
 
 
 //update
-ZEND_BEGIN_ARG_INFO(basedb_arg_update, 2)
+ZEND_BEGIN_ARG_INFO(basedb_arg_update, 0)
 	ZEND_ARG_INFO(0, tablename)
 	ZEND_ARG_ARRAY_INFO(0, data, 1) //ZEND_ARG_ARRAY_INFO(by_ref, name, allow_null)
 ZEND_END_ARG_INFO()
 
 //del
-ZEND_BEGIN_ARG_INFO(basedb_arg_del, 2)
+ZEND_BEGIN_ARG_INFO(basedb_arg_del, 0)
 	ZEND_ARG_INFO(0, sql)
 ZEND_END_ARG_INFO()
 
@@ -143,15 +147,28 @@ PHP_METHOD(Basedb, connect)
 
 }
 
-PHP_METHOD(Basedb, select);
-PHP_METHOD(Basedb, insert);
-PHP_METHOD(Basedb, update);
-PHP_METHOD(Basedb, del);
+PHP_METHOD(Basedb, select)
+{
+
+}
+PHP_METHOD(Basedb, insert)
+{
+
+}
+PHP_METHOD(Basedb, update)
+{
+
+}
+PHP_METHOD(Basedb, del)
+{
+
+}
 
 /* {{{ basedb_methods[]
 */
 const zend_function_entry basedb_methods[] = {
 	PHP_ME(Basedb, __construct, basedb_arg_construct, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
+	PHP_ME(Basedb, connect, basedb_arg_connect, ZEND_ACC_CTOR|ZEND_ACC_PUBLIC)
 	PHP_ME(Basedb, select, basedb_arg_select, ZEND_ACC_PUBLIC)
 	PHP_ME(Basedb, insert, basedb_arg_insert, ZEND_ACC_PUBLIC)
 	PHP_ME(Basedb, update, basedb_arg_update, ZEND_ACC_PUBLIC)

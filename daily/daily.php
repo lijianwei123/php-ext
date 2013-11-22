@@ -18,4 +18,9 @@ if (extension_loaded($module)) {
 	$str = "Module $module is not compiled into PHP";
 }
 echo "$str\n";
+
+print_r(get_class_methods("basedb"));
+print_r(get_class_vars("basedb"));
+phpinfo();
+
 ?>
