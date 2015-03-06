@@ -74,6 +74,11 @@ ZEND_END_MODULE_GLOBALS(share_config)
 #define SHARE_CONFIG_G(v) (share_config_globals.v)
 #endif
 
+
+
+#define SHARE_CONFIG_SHM_KEY  ftok("/etc/rc.local", 1)
+#define SHARE_CONFIG_SIZE   1024 * 1024
+
 #endif	/* PHP_SHARE_CONFIG_H */
 
 

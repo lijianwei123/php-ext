@@ -27,28 +27,24 @@
 #include "ext/standard/info.h"
 #include "php_share_config.h"
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+
 /* If you declare any globals in php_share_config.h uncomment this: */
 ZEND_DECLARE_MODULE_GLOBALS(share_config)
 
-HashTable *share_config_ht;
-
-long shm_size = 0l;
-
-/* True global resources - no need for thread safety here */
-static int le_share_config;
-
+static HashTable *share_config_ht = NULL;
 
 /* {{{ arginfo */
-ZEND_BEGIN_ARG_INFO_EX(get_share_config_arg_info, 0, 0, 2)
-	ZEND_ARG_INFO(0, section)
+ZEND_BEGIN_ARG_INFO_EX(get_share_config_arg_info, 0, 0, 1)
 	ZEND_ARG_INFO(0, item)
 ZEND_END_ARG_INFO()
 
-
-ZEND_BEGIN_ARG_INFO_EX(del_share_config_arg_info, 0, 0, 2)
-	ZEND_ARG_INFO(0, section)
+ZEND_BEGIN_ARG_INFO_EX(set_share_config_arg_info, 0, 0, 2)
 	ZEND_ARG_INFO(0, item)
+	ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
+
 /* }}} */
 
 
@@ -57,19 +53,14 @@ ZEND_END_ARG_INFO()
  * Every user visible function must have an entry in share_config_functions[].
  */
 const zend_function_entry share_config_functions[] = {
-	PHP_FE(confirm_share_config_compiled,	NULL)		/* For testing, remove later. */
 	PHP_FE(get_share_config, get_share_config_arg_info)
-	PHP_FE(del_share_config, del_share_config_arg_info)
+	PHP_FE(set_share_config, set_share_config_arg_info)
+	PHP_FE(start_share_config, NULL)
 	{NULL, NULL, NULL}	/* Must be the last line in share_config_functions[] */
 };
 /* }}} */
 
-/** {{{ module depends
- *  依赖shmop 存储是否有更新
- */
 
-
-/* }}} */
 
 /* {{{ share_config_module_entry
  */
@@ -115,7 +106,6 @@ static void php_share_config_init_globals(zend_share_config_globals *share_confi
 /* }}} */
 
 
-int time_of_minit = 0;
 
 /* {{{ PHP_MINIT_FUNCTION
  */
@@ -124,20 +114,16 @@ PHP_MINIT_FUNCTION(share_config)
 	/* If you have INI entries, uncomment these lines */
 	REGISTER_INI_ENTRIES();
 
-	//@see http://www.walu.cc/phpbook/3.1.md   pemalloc
-	share_config_ht = (HashTable *)pemalloc(sizeof(HashTable), 1);
-
-	if (!share_config_ht) {
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "pemalloc share_config_ht error");
+	key_t ipcKey = SHARE_CONFIG_SHM_KEY;
+	int sc_shm_id = shmget(ipcKey, SHARE_CONFIG_SIZE, IPC_CREATE | 0666);
+	if (sc_shm_id < 0) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "shmget sys mem error Error: %s [%d]", strerror(errno), errno);
 	}
 
-	//初始化hash @see http://www.walu.cc/phpbook/8.2.md
-	zend_hash_init(share_config_ht, 8, NULL, NULL, 1);
-
-
-	shm_size = strlen("2014-10-14 18:46:55") * SHARE_CONFIG_G(config_item_num);
-
-
+	if ((share_config_ht = (HashTable *)shmat(sc_shm_id, NULL, 0)) < 0) {
+		 php_error_docref(NULL TSRMLS_CC, E_ERROR, "attach sys mem error Error: %s [%d]", strerror(errno), errno);
+		 RETURN_FALSE;
+	}
 
 	return SUCCESS;
 }
@@ -150,11 +136,8 @@ PHP_MSHUTDOWN_FUNCTION(share_config)
 	/* uncomment this line if you have INI entries*/
 	UNREGISTER_INI_ENTRIES();
 
-	//清除hashtable
-	if (share_config_ht) {
-		zend_hash_destroy(share_config_ht);
-		pefree(share_config_ht, 1);
-	}
+	if (share_config_ht != NULL)
+		shmdt(share_config_ht);
 
 	return SUCCESS;
 }
@@ -188,152 +171,80 @@ PHP_MINFO_FUNCTION(share_config)
 
 	/* Remove comments if you have entries in php.ini*/
 	DISPLAY_INI_ENTRIES();
-
 }
 /* }}} */
 
-
-/* Remove the following function when you have succesfully modified config.m4
-   so that your module can be compiled into PHP, it exists only for testing
-   purposes. */
-
-/* Every user-visible function in PHP should document itself in the source */
-/* {{{ proto string confirm_share_config_compiled(string arg)
-   Return a string to confirm that the module is compiled in */
-PHP_FUNCTION(confirm_share_config_compiled)
-{
-	char *arg = NULL;
-	int arg_len, len;
-	char *strg;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	len = spprintf(&strg, 0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "share_config", arg);
-	RETURN_STRINGL(strg, len, 0);
-}
-/* }}} */
 
 /* {{{ get_share_config  获取共享配置
  */
 PHP_FUNCTION(get_share_config)
 {
-	char *share_config_api_url = NULL;
-	char *request_url = NULL;
-	const char *action = "get_share_config";
-
-	char *section = NULL;
 	char *item = NULL;
+	int item_len = 0;
+	zval **value = NULL;
 
-	char *hash_key = NULL;
-
-	int section_len = 0, item_len = 0, len = 0;
-
-	char *ret_str = NULL;
-
-
-	share_config_api_url = SHARE_CONFIG_G(share_config_api_url);
-	if (!share_config_api_url) {
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "php.ini item share_config_api_url must be not empty!");
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s!" &item, &item_len) == FAILURE) {
 		RETURN_FALSE;
 	}
 
-	//获取参数
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &section, &section_len, &item, &item_len) == FAILURE) {
+	if (!item) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR,  "item is empty!");
 		RETURN_FALSE;
 	}
 
-	if (!section || !item) {
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "section or item empty!");
+	if (zend_hash_find(share_config_ht, item, item_len + 1, (void **)&value) == FAILURE) {
 		RETURN_FALSE;
-	}
-
-	len = spprintf(&hash_key, 0, "%s %s", section, item);
-
-#if ZEND_DEBUG
-	php_printf("share_config_ht element nums: %d<br>", zend_hash_num_elements(share_config_ht));
-	php_printf("module time: %d<br>", time_of_minit);
-#endif
-
-	if (zend_hash_find(share_config_ht, hash_key, len + 1, (void **)&ret_str) == SUCCESS) {
-		efree(hash_key);
-		RETURN_STRING(ret_str, 1);
 	} else {
-		//如果没有找到
-		len = spprintf(&request_url, 0, "%s?action=%s&section=%s&item=%s", share_config_api_url, action, section, item);
-
-		zval func = {{0}, 0};
-		ZVAL_STRING(&func, "file_get_contents", 0);
-
-		zval *call_params[1] = {0};
-		MAKE_STD_ZVAL(call_params[0]);
-		ZVAL_STRING(call_params[0], request_url, 1);
-
-		zval *retval_ptr = NULL;
-		MAKE_STD_ZVAL(retval_ptr);
-
-		if (call_user_function(EG(function_table), NULL, &func, retval_ptr, 1, call_params TSRMLS_CC) == FAILURE) {
-			php_error_docref(NULL TSRMLS_CC, E_ERROR, "file_get_contents error");
-			ret_str = "";
-			goto free_memory;
-		}
-
-		ret_str = pestrndup(Z_STRVAL_P(retval_ptr), Z_STRLEN_P(retval_ptr), 1);
-
-#if ZEND_DEBUG
-	php_printf("ret_str: %s<br>", ret_str);
-#endif
-
-		//缓存
-		if (zend_hash_update(share_config_ht, hash_key, strlen(hash_key) + 1, (void *)ret_str, strlen(ret_str) + 1, NULL) == FAILURE) {
-			php_error_docref(NULL TSRMLS_CC, E_ERROR, "save cache failure");
-		}
-#if ZEND_DEBUG
-	char *hash_value = NULL;
-	if (zend_hash_find(share_config_ht, hash_key, strlen(hash_key) + 1, (void **)&hash_value) == SUCCESS) {
-		php_printf("hash_value: %s<br>", hash_value);
-	} else {
-		php_printf("get hash_value failure <br>");
-	}
-#endif
-
-		free_memory:
-			efree(request_url);
-			efree(hash_key);
-
-			zval_ptr_dtor(&retval_ptr);
-			zval_ptr_dtor(&call_params[0]);
-
-
-		RETURN_STRING(ret_str, 1);
+		RETURN_ZVAL(*value, 1, 0);
 	}
 }
 /* }}} */
 
 
-/* {{{ get_share_config   删除共享配置
+/* {{{ set_share_config  设置共享配置
  */
-PHP_FUNCTION(del_share_config)
+PHP_FUNCTION(set_share_config)
 {
-	char *section = NULL, *item = NULL;
-	int section_len = 0, item_len = 0, len = 0;
-	char *hash_key = NULL;
+	char *item = NULL;
+	int item_len = 0;
+	zval *value = NULL;
 
-	//获取参数
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &section, &section_len, &item, &item_len) == FAILURE) {
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s!z" &item, &item_len, &value) == FAILURE) {
 		RETURN_FALSE;
 	}
 
-	len = spprintf(&hash_key, 0, "%s %s", section, item);
-	if (zend_hash_del(share_config_ht, hash_key, len + 1) == SUCCESS) {
-		efree(hash_key);
+	if (!item || !value) {
+		php_error_docref(NULL TSRMLS_CC, E_ERROR, "item or value is empty!");
+		RETURN_FALSE;
+	}
+
+	if (share_config_ht == NULL) {
+
+	}
+
+	if (zend_hash_update(share_config_ht, &item, &item_len, &value, sizeof(zval *), NULL) == SUCCESS) {
+		Z_ADDREF_P(value);
 		RETURN_TRUE;
 	}
-	efree(hash_key);
 	RETURN_FALSE;
 }
 /* }}} */
+
+
+/* {{{ start_share_config  启动共享配置
+ */
+PHP_FUNCTION(start_share_config)
+{
+    if (strcasecmp("cli", sapi_module.name) != 0) {
+        php_error_docref(NULL TSRMLS_CC, E_ERROR, "share_config must run at php_cli environment.");
+        RETURN_FALSE;
+    }
+    share_config_ht =
+}
+/* }}} */
+
+
 
 /* The previous line is meant for vim and emacs, so it can correctly fold and 
    unfold functions in source code. See the corresponding marks just before 
