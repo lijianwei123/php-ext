@@ -55,17 +55,28 @@ ZEND_END_ARG_INFO()
 const zend_function_entry share_config_functions[] = {
 	PHP_FE(get_share_config, get_share_config_arg_info)
 	PHP_FE(set_share_config, set_share_config_arg_info)
-	PHP_FE(start_share_config, NULL)
+	PHP_FE(share_config_client, NULL)
+	PHP_FE(share_config_server, NULL)
 	{NULL, NULL, NULL}	/* Must be the last line in share_config_functions[] */
 };
 /* }}} */
 
 
+#if ZEND_MODULE_API_NO >= 20050922
+zend_module_dep share_config_deps[] = {
+	ZEND_MOD_REQUIRED("redis")
+	//ZEND_MOD_OPTIONAL("session")
+	{NULL, NULL, NULL}
+};
+#endif
 
 /* {{{ share_config_module_entry
  */
 zend_module_entry share_config_module_entry = {
 #if ZEND_MODULE_API_NO >= 20050922
+	STANDARD_MODULE_HEADER_EX, NULL,
+	share_config_deps,
+#else
 	STANDARD_MODULE_HEADER,
 #endif
 	"share_config",
@@ -319,7 +330,7 @@ PHP_FUNCTION(get_share_config)
 /* }}} */
 
 
-/* {{{ set_share_config  设置共享配置
+/* {{{ set_share_config  修改配置  当前请求中有效
  */
 PHP_FUNCTION(set_share_config)
 {
@@ -328,20 +339,16 @@ PHP_FUNCTION(set_share_config)
 	zval *value = NULL;
 
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s!z" &item, &item_len, &value) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s!z", &item, &item_len, &value) == FAILURE) {
 		RETURN_FALSE;
 	}
 
 	if (!item || !value) {
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "item or value is empty!");
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "item or value is empty!");
 		RETURN_FALSE;
 	}
 
-	if (share_config_ht == NULL) {
-
-	}
-
-	if (zend_hash_update(share_config_ht, &item, &item_len, &value, sizeof(zval *), NULL) == SUCCESS) {
+	if (zend_hash_update(share_config_ht, item, item_len + 1, &value, sizeof(zval *), NULL) == SUCCESS) {
 		Z_ADDREF_P(value);
 		RETURN_TRUE;
 	}
@@ -349,18 +356,63 @@ PHP_FUNCTION(set_share_config)
 }
 /* }}} */
 
+static function worker_loop()
+{
+	//连接服务端
+	//获取信息
+	//更新
+}
 
-/* {{{ start_share_config  启动共享配置
+
+/* {{{ start_share_config  启动共享配置客户端
  */
-PHP_FUNCTION(start_share_config)
+PHP_FUNCTION(share_config_client)
 {
     if (strcasecmp("cli", sapi_module.name) != 0) {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "share_config must run at php_cli environment.");
         RETURN_FALSE;
     }
-    share_config_ht =
+    //初始化
+    bzero(item_ver_ptr, SHARE_CONFIG_G(config_item_num) * sizeof(config_item_ver_t) + 9);
+    memcpy(item_ver_ptr, "lijianwei", strlen("lijianwei"));
+
+    //开启两个进程  一个master  一个worker
+    if (daemon(0, 0) < 0) {
+    	php_printf("daemon failure\n");
+    	RETURN_FALSE;
+    }
+    pid_t pid = fork();
+    int status = 0;
+    if (pid < 0) {
+    	php_printf("create fork error!\n");
+    	RETURN_FALSE;
+    } else if (pid > 0) {
+    	while (1) {
+			pid = wait(&status);
+			//子进程挂掉了
+			if (pid > 0) {
+				php_printf("worker process %d die\n", pid);
+				pid = fork();
+				if (pid == 0) {
+					worker_loop();
+				}
+			}
+    	}
+    } else if (pid == 0) {
+    	worker_loop();
+    }
+
 }
 /* }}} */
+
+
+/* {{{ start_share_config  启动共享配置服务端
+ */
+PHP_FUNCTION(share_config_server)
+{
+	//epoll事件监听
+	//mysql存储数据
+}
 
 
 

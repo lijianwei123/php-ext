@@ -60,4 +60,9 @@ if test "$PHP_SHARE_CONFIG" != "no"; then
   dnl PHP_SUBST(SHARE_CONFIG_SHARED_LIBADD)
 
   PHP_NEW_EXTENSION(share_config, share_config.c, $ext_shared)
-fi
+  
+  ifdef([PHP_ADD_EXTENDION_DEP],
+  [
+    PHP_ADD_EXTENSION_DEP(share_config, redis)
+  ])
+  fi
