@@ -412,6 +412,8 @@ PHP_FUNCTION(share_config_server)
 {
 	//epoll事件监听
 	//mysql存储数据
+	//test
+	//
 }
 
 
