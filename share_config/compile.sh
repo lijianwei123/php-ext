@@ -4,5 +4,5 @@
 ./configure --with-php-config=/usr/local/debug_php/bin/php-config
 make
 make install
-make clean
+#make clean
 
