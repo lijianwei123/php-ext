@@ -5,4 +5,5 @@
 make
 make install
 #正式发布
+#github直接加的
 
