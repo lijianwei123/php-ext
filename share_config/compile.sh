@@ -2,8 +2,7 @@
 #!/bin/sh
 /usr/local/debug_php/bin/phpize
 ./configure --with-php-config=/usr/local/debug_php/bin/php-config
+make clean
 make
 make install
-#正式发布
-#test2
 
